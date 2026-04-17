@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI PPT 助手</title>
+
+  <!--
+    Office.js 仅在 PowerPoint 宿主中加载。
+    WPS 环境下此脚本不存在，不会报错（条件加载）。
+  -->
+  <script>
+    (function () {
+      try {
+        // 如果是 Office Add-in 环境，加载 Office.js
+        if (window.location.search.includes('_host_Info') ||
+            window.external?.GetContext ||
+            window.OSF) {
+          var s = document.createElement('script');
+          s.src = 'https://appsforoffice.microsoft.com/lib/1/hosted/office.js';
+          s.async = false;
+          document.head.appendChild(s);
+        }
+      } catch (e) { /* 非 Office 环境，忽略 */ }
+    })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/index.tsx"></script>
+</body>
+</html>

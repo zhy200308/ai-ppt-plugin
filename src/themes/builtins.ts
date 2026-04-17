@@ -1,0 +1,161 @@
+import type { ThemeDefinition } from './types';
+
+export const BUILTIN_THEMES: ThemeDefinition[] = [
+  {
+    id: 'modern-blue',
+    name: 'Modern Blue',
+    primaryColor: '#1A3C6E',
+    backgroundColor: '#FFFFFF',
+    accentColor: '#2B6CB0',
+    fontFamily: '微软雅黑',
+    defaults: {
+      backgroundColor: '#FFFFFF',
+      title: {
+        fontFamily: '微软雅黑',
+        fontSize: 36,
+        bold: true,
+        color: '#1A3C6E',
+        alignment: 'left',
+      },
+      body: {
+        fontFamily: '微软雅黑',
+        fontSize: 20,
+        color: '#1F2937',
+        alignment: 'left',
+        lineSpacing: 1.15,
+      },
+    },
+  },
+  // 教育（答辩/汇报/教学/高校/研究生/比赛等）优先：多套稳重、清晰、阅读友好
+  {
+    id: 'edu-thesis-blue',
+    name: 'Edu Thesis Blue',
+    primaryColor: '#0F4C81',
+    backgroundColor: '#FFFFFF',
+    accentColor: '#2563EB',
+    fontFamily: '微软雅黑',
+    defaults: {
+      backgroundColor: '#FFFFFF',
+      title: { fontFamily: '微软雅黑', fontSize: 34, bold: true, color: '#0F4C81', alignment: 'left' },
+      body: { fontFamily: '微软雅黑', fontSize: 20, color: '#1F2937', alignment: 'left', lineSpacing: 1.2 },
+    },
+  },
+  {
+    id: 'edu-defense-green',
+    name: 'Edu Defense Green',
+    primaryColor: '#166534',
+    backgroundColor: '#FFFFFF',
+    accentColor: '#16A34A',
+    fontFamily: '微软雅黑',
+    defaults: {
+      backgroundColor: '#FFFFFF',
+      title: { fontFamily: '微软雅黑', fontSize: 34, bold: true, color: '#166534', alignment: 'left' },
+      body: { fontFamily: '微软雅黑', fontSize: 20, color: '#111827', alignment: 'left', lineSpacing: 1.2 },
+    },
+  },
+  {
+    id: 'edu-seminar-purple',
+    name: 'Edu Seminar Purple',
+    primaryColor: '#4C1D95',
+    backgroundColor: '#FFFFFF',
+    accentColor: '#7C3AED',
+    fontFamily: '微软雅黑',
+    defaults: {
+      backgroundColor: '#FFFFFF',
+      title: { fontFamily: '微软雅黑', fontSize: 34, bold: true, color: '#4C1D95', alignment: 'left' },
+      body: { fontFamily: '微软雅黑', fontSize: 20, color: '#1F2937', alignment: 'left', lineSpacing: 1.2 },
+    },
+  },
+  {
+    id: 'edu-teaching-warm',
+    name: 'Edu Teaching Warm',
+    primaryColor: '#9A3412',
+    backgroundColor: '#FFFBEB',
+    accentColor: '#F59E0B',
+    fontFamily: '微软雅黑',
+    defaults: {
+      backgroundColor: '#FFFBEB',
+      title: { fontFamily: '微软雅黑', fontSize: 34, bold: true, color: '#9A3412', alignment: 'left' },
+      body: { fontFamily: '微软雅黑', fontSize: 20, color: '#1F2937', alignment: 'left', lineSpacing: 1.25 },
+    },
+  },
+  {
+    id: 'edu-research-gray',
+    name: 'Edu Research Gray',
+    primaryColor: '#111827',
+    backgroundColor: '#FFFFFF',
+    accentColor: '#6B7280',
+    fontFamily: '微软雅黑',
+    defaults: {
+      backgroundColor: '#FFFFFF',
+      title: { fontFamily: '微软雅黑', fontSize: 36, bold: true, color: '#111827', alignment: 'left' },
+      body: { fontFamily: '微软雅黑', fontSize: 20, color: '#374151', alignment: 'left', lineSpacing: 1.2 },
+    },
+  },
+  {
+    id: 'edu-competition-red',
+    name: 'Edu Competition Red',
+    primaryColor: '#7F1D1D',
+    backgroundColor: '#FFFFFF',
+    accentColor: '#DC2626',
+    fontFamily: '微软雅黑',
+    defaults: {
+      backgroundColor: '#FFFFFF',
+      title: { fontFamily: '微软雅黑', fontSize: 34, bold: true, color: '#7F1D1D', alignment: 'left' },
+      body: { fontFamily: '微软雅黑', fontSize: 20, color: '#111827', alignment: 'left', lineSpacing: 1.2 },
+    },
+  },
+
+  // 通用企业级：科技/金融/深色
+  {
+    id: 'minimal-light',
+    name: 'Minimal Light',
+    primaryColor: '#111827',
+    backgroundColor: '#FFFFFF',
+    accentColor: '#6B7280',
+    fontFamily: '微软雅黑',
+    defaults: {
+      backgroundColor: '#FFFFFF',
+      title: {
+        fontFamily: '微软雅黑',
+        fontSize: 38,
+        bold: true,
+        color: '#111827',
+        alignment: 'left',
+      },
+      body: {
+        fontFamily: '微软雅黑',
+        fontSize: 20,
+        color: '#374151',
+        alignment: 'left',
+        lineSpacing: 1.2,
+      },
+    },
+  },
+  {
+    id: 'finance-blackgold',
+    name: 'Finance BlackGold',
+    primaryColor: '#F5D565',
+    backgroundColor: '#0B1220',
+    accentColor: '#D4AF37',
+    fontFamily: '微软雅黑',
+    defaults: {
+      backgroundColor: '#0B1220',
+      title: { fontFamily: '微软雅黑', fontSize: 36, bold: true, color: '#F5D565', alignment: 'left' },
+      body: { fontFamily: '微软雅黑', fontSize: 20, color: '#E5E7EB', alignment: 'left', lineSpacing: 1.2 },
+    },
+  },
+  {
+    id: 'tech-cyan',
+    name: 'Tech Cyan',
+    primaryColor: '#22D3EE',
+    backgroundColor: '#07121E',
+    accentColor: '#38BDF8',
+    fontFamily: '微软雅黑',
+    defaults: {
+      backgroundColor: '#07121E',
+      title: { fontFamily: '微软雅黑', fontSize: 36, bold: true, color: '#E5E7EB', alignment: 'left' },
+      body: { fontFamily: '微软雅黑', fontSize: 20, color: '#D1D5DB', alignment: 'left', lineSpacing: 1.2 },
+    },
+  },
+];

@@ -1,0 +1,63 @@
+{
+  "name": "AI PPT 助手",
+  "version": "1.0.0",
+  "description": "AI 驱动的演示文稿智能编辑助手",
+  "author": "AI PPT Plugin",
+  "homepage": "https://github.com/your-org/ai-ppt-plugin",
+  "type": "wpp",
+  "target": "presentation",
+  "icon": "assets/icon-64.png",
+
+  "taskpanes": [
+    {
+      "id": "ai-ppt-taskpane",
+      "label": "AI 助手",
+      "icon": "assets/icon-32.png",
+      "url": "index.html",
+      "width": 380,
+      "position": "right"
+    }
+  ],
+
+  "ribbons": [
+    {
+      "tab": "TabHome",
+      "groups": [
+        {
+          "id": "ai-ppt-group",
+          "label": "AI PPT",
+          "buttons": [
+            {
+              "id": "open-taskpane",
+              "label": "AI 助手",
+              "icon": "assets/icon-32.png",
+              "tooltip": "打开 AI PPT 助手侧边栏",
+              "action": {
+                "type": "taskpane",
+                "taskpaneId": "ai-ppt-taskpane"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "permissions": [
+    "activeDocument",
+    "clipboard",
+    "network"
+  ],
+
+  "engines": {
+    "wps": ">=12.0.0"
+  },
+
+  "platforms": ["win32", "darwin"],
+
+  "settings": {
+    "debug": false,
+    "minWidth": 320,
+    "maxWidth": 500
+  }
+}
