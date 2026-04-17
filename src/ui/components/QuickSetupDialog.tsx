@@ -3,10 +3,17 @@
 //  支持粘贴 ccswitch / Claude Code / 环境变量格式
 // ============================================================
 
-import React, { useState, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useCallback } from 'react';
 import { parseQuickSetup, generateProviderKey } from '../../ai/quick-setup';
 import type { ProviderConfig } from '../../ai/types';
 import { Zap, X, Check, AlertCircle, Clipboard } from 'lucide-react';
+
+export interface QuickSetupDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApply: (config: ProviderConfig) => void;
+}
 
 const EXAMPLE_CONFIGS = [
   {
@@ -26,12 +33,7 @@ $env:ANTHROPIC_BASE_URL = "https://anyrouter.top"`,
   },
 ];
 
-interface Props {
-  onAdd: (key: string, config: ProviderConfig) => void;
-  onClose: () => void;
-}
-
-export function QuickSetupDialog({ onAdd, onClose }: Props) {
+export function QuickSetupDialog({ open, onOpenChange, onApply }: QuickSetupDialogProps) {
   const [text, setText] = useState('');
   const [preview, setPreview] = useState<Partial<ProviderConfig> | null>(null);
   const [message, setMessage] = useState<{ type: 'info' | 'success' | 'error'; text: string } | null>(null);
@@ -68,8 +70,7 @@ export function QuickSetupDialog({ onAdd, onClose }: Props) {
   const handleConfirm = useCallback(() => {
     if (!preview || !preview.provider) return;
 
-    const key = generateProviderKey(preview.provider, preview.baseUrl ?? '');
-    onAdd(key, {
+    onApply({
       provider: preview.provider,
       label: preview.label ?? preview.provider,
       apiKey: preview.apiKey ?? '',
@@ -81,21 +82,24 @@ export function QuickSetupDialog({ onAdd, onClose }: Props) {
       protocol: preview.protocol,
       authStyle: preview.authStyle,
     });
-  }, [preview, onAdd]);
+    onOpenChange(false);
+  }, [preview, onApply, onOpenChange]);
 
   const handleExample = useCallback((exampleText: string) => {
     handleParse(exampleText);
   }, [handleParse]);
 
+  if (!open) return null;
+
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={() => onOpenChange(false)}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <span className="modal-title">
             <Zap size={16} />
             快速配置
           </span>
-          <button className="btn-icon-sm" onClick={onClose}>
+          <button className="btn-icon-sm" onClick={() => onOpenChange(false)}>
             <X size={14} />
           </button>
         </div>
@@ -175,7 +179,7 @@ export function QuickSetupDialog({ onAdd, onClose }: Props) {
         </div>
 
         <div className="modal-footer">
-          <button className="btn-sm btn-ghost" onClick={onClose}>
+          <button className="btn-sm btn-ghost" onClick={() => onOpenChange(false)}>
             取消
           </button>
           <button

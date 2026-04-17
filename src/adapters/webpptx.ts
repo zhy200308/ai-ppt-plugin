@@ -398,7 +398,7 @@ export class WebPptxAdapter implements ISlideAdapter {
             continue;
           }
 
-          const expanded = expandPluginOperation(op, {
+          const expanded = await expandPluginOperation(op, {
             slideWidth: this._presentation.slideWidth,
             slideHeight: this._presentation.slideHeight,
             theme: this._theme,

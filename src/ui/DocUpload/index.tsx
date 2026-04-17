@@ -3,7 +3,8 @@
 //  支持拖拽上传、多格式解析、上下文预览
 // ============================================================
 
-import React, { useState, useCallback, useRef } from 'react';
+import * as React from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useStore } from '../../store';
 import { parseDocument, getSupportedExtensions } from '../../parsers';
 import type { ParsedDocument } from '../../parsers';

@@ -3,7 +3,8 @@
 //  集成: 流式响应 · 阶段进度指示器 · 快捷指令 · 操作历史
 // ============================================================
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useStore } from '../../store';
 import {
   AIService,

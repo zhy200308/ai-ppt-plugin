@@ -3,7 +3,8 @@
 //  一键触发常用 PPT 修改任务
 // ============================================================
 
-import React from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import {
   Languages,
   Hash,
@@ -126,7 +127,7 @@ export function QuickActions({ onSelect, compact }: Props) {
 
 /** 简化版 — 只显示图标，用于输入框旁边 */
 export function QuickActionsMenu({ onSelect }: { onSelect: (prompt: string) => void }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="quick-actions-menu">

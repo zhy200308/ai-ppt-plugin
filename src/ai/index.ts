@@ -212,13 +212,18 @@ const SYSTEM_PROMPT = `你是一个专业的 PPT 助手，运行在 PowerPoint /
 - cover：封面（args: title, subtitle?, author?, date?）
 - section：章节页（args: title, subtitle?）
 - title-content：标题+要点（args: title, bullets?: string[], body?: string）
-- two-column：双栏对比（args: title, leftTitle?, leftBullets?: string[], rightTitle?, rightBullets?: string[]）
+- two-column：双栏对比（args: title, leftTitle?, leftBullets?: string[], rightTitle?, rightBullets?: string[], imageKeyword?: string）
+- image-text：图文排版，左图右文或左文右图（args: title, content, imageKeyword: string, imagePosition?: 'left'|'right'）
+- big-number：大字报/核心数据（args: number, title, subtitle?）
+- grid-4：四象限/四宫格（args: title, items: [{title, content}]）
 - thank-you：致谢页（args: title?, contact?）
+- auto-layout：自定义弹性布局（高级用法，args: { layout: SlideLayoutNode }）
 - bg-image：生成并应用背景图（args: prompt, apply="background"）
 
 ## 重要规则
 
 - 必须严格遵循用户最新指令中的硬性要求（例如：主题色、背景图、场景风格、页数范围、仅改某一页等）。如做不到，必须在输出前先提出澄清问题。
+- 在决定页面排版前，建议先思考内容的逻辑结构，然后再选择最合适的 callPlugin 模板。如果需要配图，必须在 args 中提供 imageKeyword（英文）。
 - 只要用户要求你修改 PPT，就必须输出可执行的 JSON 操作块，不能只给文字建议
 - 默认只输出 \`\`\`json:operations ... \`\`\` 代码块，不要输出说明文字、页名列表、总结或“我将分批输出”等自然语言
 - 操作块必须使用 \`\`\`json:operations 包裹，且内容必须是合法 JSON 数组
@@ -906,6 +911,34 @@ export class AIService {
     if (contextMsg) messages.push({ role: 'system', content: contextMsg });
     if (styleSystem) messages.push({ role: 'system', content: styleSystem });
     messages.push({ role: 'system', content: themeCatalogSystem });
+
+    try {
+      const { useStore } = require('../store');
+      const canvaConfig = useStore.getState().canvaConfig;
+      if (canvaConfig && canvaConfig.enabled && canvaConfig.accessToken && Object.keys(canvaConfig.templates).length > 0) {
+        const canvaSystem = [
+          '\n## Canva Brand Templates (可用的高级版式)',
+          '当前系统已配置了高级 Canva 模板，你可以使用 pluginId="canva-render" 插件。',
+          '可用模板映射如下（key是模板名，value是ID）：',
+          JSON.stringify(canvaConfig.templates, null, 2),
+          '当你想使用某个版式时（比如 "cover" 或 "two-column"），如果映射中存在，你可以生成类似下面的指令：',
+          `{
+  "action": "callPlugin",
+  "slideIndex": 0,
+  "pluginId": "canva-render",
+  "args": {
+    "templateId": "DAxxxxxx",
+    "title": "这一页的主标题",
+    "textVariables": { "title": "主标题", "subtitle": "副标题等" }
+  }
+}`
+        ].join('\n');
+        messages.push({ role: 'system', content: canvaSystem });
+      }
+    } catch (e) {
+      // ignore
+    }
+
     messages.push(...history);
     messages.push({ role: 'user', content: userMessage });
     return { messages, contextTokens };
@@ -1056,8 +1089,8 @@ export class AIService {
     },
   ): Promise<{ plan: EnterpriseDeckPlan; response: AIResponse; contextTokens: number }> {
     const plannerSystem = [
-      '你现在进入企业版页级编排模式。',
-      '任务不是直接生成操作，而是先生成整套 PPT 的页级蓝图。',
+      '【Researcher & Copywriter Agent 模式】',
+      '任务：作为研究员和资深文案，先为整套 PPT 生成一份极其严密的页级逻辑蓝图 (Markdown大纲转结构化JSON)。',
       '只输出一个 ```ppt-plan 代码块，不要输出任何自然语言说明。',
       '输出 JSON 结构如下：',
       '{',
@@ -1076,8 +1109,8 @@ export class AIService {
       '      "pageNumber": 1,',
       '      "title": "封面",',
       '      "purpose": "这一页的用途",',
-      '      "contentSummary": "这一页需要呈现的内容摘要",',
-      '      "designNotes": "这一页的布局、配色、版式要求",',
+      '      "contentSummary": "这一页需要呈现的核心要点（3-5条）、金句或数据，内容要详实且富有洞见",',
+      '      "designNotes": "推荐的版式(如two-column, grid-4)和配图关键词(imageKeyword)",',
       '      "targetMode": "replace"',
       '    }',
       '  ]',
@@ -1085,7 +1118,7 @@ export class AIService {
       '要求：',
       '1. pages 必须覆盖整套页面，页码连续；',
       '2. targetMode 只允许 replace / append / create；',
-      '3. theme 要尽量准确提炼用户指定的样式、主题、排版和设计语言；',
+      '3. contentSummary 必须深入扩写，不要只有一句话，要像专家一样提炼出每页的核心论点；',
       '4. 不要输出操作 JSON，不要输出解释。',
     ].join('\n');
 
@@ -1124,25 +1157,22 @@ export class AIService {
     },
   ): Promise<{ text: string; operations: SlideOperation[]; response: AIResponse; contextTokens: number }> {
     const pageSystem = [
-      '你现在进入企业版逐页生成模式。',
-      '你一次只允许生成当前这一页的操作，不要生成其他页面，不要输出自然语言。',
-      '只输出一个 ```json:operations 代码块。',
-      `当前整套页数: ${plan.totalPages}`,
-      `当前目标页: 第 ${page.pageNumber} 页`,
-      `当前目标页标题: ${page.title}`,
-      `当前目标页用途: ${page.purpose ?? '未提供'}`,
-      `当前目标页内容摘要: ${page.contentSummary ?? '未提供'}`,
-      `当前目标页设计说明: ${page.designNotes ?? '未提供'}`,
-      `页面处理方式: ${page.targetMode ?? 'replace'}`,
-      '主题要求如下，请严格保持一致：',
+      '【Art Director Agent 模式】',
+      '任务：作为顶级美术指导，你现在的目标是将 Copywriter 提供的页面内容(contentSummary)映射到最合适的弹性排版(Layout)中。',
+      '你必须只输出一个 ```json:operations 代码块。',
+      `当前目标页: 第 ${page.pageNumber} 页 / 共 ${plan.totalPages} 页`,
+      `目标页标题: ${page.title}`,
+      `本页详实内容: ${page.contentSummary ?? '未提供'}`,
+      `版式推荐与配图: ${page.designNotes ?? '未提供'}`,
+      '主题规范：',
       JSON.stringify(plan.theme, null, 2),
-      '规则：',
-      '1. 只生成当前页需要的操作；',
-      '2. 如果当前页不存在，先创建所需页面再操作；',
-      '3. 优先精确使用主题颜色、字体、样式、布局和文案设计；',
-      '4. 如果没有可靠 shapeId，严禁猜测，改用 insertText / addSlide / setBackground；',
-      '5. insertText 必须把 style 放在 params.style 内；',
-      '6. 输出必须是合法 JSON 数组，不要解释。',
+      '核心规则：',
+      '1. 优先使用 callPlugin 调用内置排版(如 two-column, image-text, grid-4, big-number)，将内容填入对应的参数中；',
+      '2. 若内容包含需要配图或具象化表达的场景，必须在 callPlugin 中设置 imageKeyword="英文关键词"(如果需要图标，设置 imageKeyword="icon:lucide-zap" 等)；',
+      '3. 【重要】如果需要生成高水准的背景图(如使用 bg-image 插件)，prompt 参数必须是专为 Flux/SDXL 优化的高质量生图提示词（全英文），例如："abstract cyberpunk technology background, dark blue gradient, glowing neon lines, isometric 3D, empty space for text, 8k resolution, masterpiece --ar 16:9"；',
+      '4. 如果检测到有可用的 Canva 模板（参考下文的 Canva 模板列表），你也可以使用 canva-render 插件，将提取的内容填入 textVariables 字典中，获得降维打击的极高排版质量。',
+      '5. 如果内置版式无法满足，使用 auto-layout 插件，自己编写 SlideLayoutNode 弹性布局结构；',
+      '6. 必须输出合法 JSON 数组，不要解释。',
     ].join('\n');
 
     const pageUserMessage = [

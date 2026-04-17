@@ -4,7 +4,8 @@
 //  - 中转站：所有字段都可编辑（URL / 鉴权方式 / 模型等）
 // ============================================================
 
-import React, { useState, useCallback, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useStore } from '../../store';
 import { AIService, detectSystemProxy, parseProxyUrl } from '../../ai';
 import { importThemePackFromZip, importThemePackFromFolder, importThemePackFromPptx, themeRegistry } from '../../themes';
@@ -16,7 +17,7 @@ import {
   RELAY_TEMPLATES,
 } from '../../ai/types';
 import type { ProviderConfig, ProxyConfig, ProviderHealth, AIProvider } from '../../ai/types';
-import { QuickSetupDialog } from '../components/QuickSetupDialog';
+import { QuickSetupDialog, type QuickSetupDialogProps } from '../components/QuickSetupDialog';
 import { LatencyBadge } from '../components/LatencyBadge';
 import {
   X,
@@ -58,7 +59,7 @@ export function Settings() {
     clearStyleProfile,
   } = useStore();
 
-  const [section, setSection] = useState<'providers' | 'proxy' | 'themes' | 'skills'>('providers');
+  const [section, setSection] = useState<'providers' | 'proxy' | 'themes' | 'skills' | 'canva'>('providers');
   const [showQuickSetup, setShowQuickSetup] = useState(false);
   const [showAddRelay, setShowAddRelay] = useState<'claude-relay' | 'openai-relay' | null>(null);
 
@@ -85,6 +86,13 @@ export function Settings() {
         >
           <Wrench size={14} />
           技能
+        </button>
+        <button
+          className={`settings-nav-btn ${section === 'canva' ? 'active' : ''}`}
+          onClick={() => setSection('canva')}
+        >
+          <Paintbrush size={14} />
+          Canva
         </button>
         <button
           className={`settings-nav-btn ${section === 'proxy' ? 'active' : ''}`}
@@ -126,16 +134,22 @@ export function Settings() {
 
       {section === 'skills' && <SkillsSection />}
 
-      {showQuickSetup && (
-        <QuickSetupDialog
-          onAdd={(key, config) => {
-            addProvider(key, config);
-            setActiveProvider(key);
-            setShowQuickSetup(false);
-          }}
-          onClose={() => setShowQuickSetup(false)}
-        />
-      )}
+      {section === 'canva' && <CanvaSection />}
+
+      <QuickSetupDialog 
+        open={showQuickSetup} 
+        onOpenChange={setShowQuickSetup} 
+        onApply={(config) => {
+          let hostname = 'api';
+          if (config.baseUrl) {
+            try { hostname = new URL(config.baseUrl).hostname.replace(/\./g, '_'); } catch {}
+          }
+          const key = `${config.provider}_${hostname}_${Date.now().toString(36)}`;
+          addProvider(key, config);
+          setActiveProvider(key);
+          setShowQuickSetup(false);
+        }} 
+      />
 
       {showAddRelay && (
         <AddRelayDialog
@@ -148,6 +162,92 @@ export function Settings() {
           onClose={() => setShowAddRelay(null)}
         />
       )}
+    </div>
+  );
+}
+
+function CanvaSection() {
+  const { canvaConfig, setCanvaConfig } = useStore();
+  const [token, setToken] = useState(canvaConfig.accessToken);
+  const [enabled, setEnabled] = useState(canvaConfig.enabled);
+  const [templatesStr, setTemplatesStr] = useState(() => JSON.stringify(canvaConfig.templates, null, 2));
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = useCallback(() => {
+    try {
+      const parsed = JSON.parse(templatesStr);
+      setCanvaConfig({ accessToken: token, enabled, templates: parsed });
+      setError(null);
+      alert('Canva 配置已保存');
+    } catch (e: any) {
+      setError('模板配置 JSON 格式错误: ' + e.message);
+    }
+  }, [token, enabled, templatesStr, setCanvaConfig]);
+
+  return (
+    <div className="settings-content">
+      <div className="settings-card">
+        <div className="settings-card-header">
+          <div className="settings-card-title">
+            <Paintbrush size={16} />
+            Canva 集成配置 (Brand Templates)
+          </div>
+          <div className="settings-card-desc">
+            配置 Canva Connect API，允许 AI 在生成时使用您的 Canva 品牌模板，获得降维打击的排版效果。
+          </div>
+        </div>
+
+        <div className="form-group" style={{ marginTop: 12 }}>
+          <label className="checkbox-label" style={{ fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+            />
+            启用 Canva 混合渲染模式
+          </label>
+        </div>
+
+        <div className="form-group" style={{ marginTop: 16 }}>
+          <label>Access Token (Bearer Token)</label>
+          <input
+            type="password"
+            className="input-text"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            placeholder="您的 Canva API 访问令牌"
+          />
+          <div className="text-xs text-gray-500 mt-1">
+            请前往 Canva Developers 平台申请应用并获取长期有效的 Token。
+          </div>
+        </div>
+
+        <div className="form-group" style={{ marginTop: 16 }}>
+          <label>版式到 Canva 模板 ID 映射 (JSON)</label>
+          <textarea
+            className="input-text"
+            rows={8}
+            value={templatesStr}
+            onChange={(e) => setTemplatesStr(e.target.value)}
+            placeholder={'{\n  "cover": "DAxxxxxx",\n  "two-column": "DAyyyyyy"\n}'}
+            style={{ fontFamily: 'monospace' }}
+          />
+          <div className="text-xs text-gray-500 mt-1">
+            键名为我们的版式名（如 cover, two-column），键值为 Canva 中对应的 Brand Template ID。
+            模板中需提前定义好文本变量 (如 title, subtitle) 或图片变量。
+          </div>
+        </div>
+
+        {error && (
+          <div className="text-red-600 text-sm mt-2">{error}</div>
+        )}
+
+        <div className="mt-4">
+          <button className="btn-primary" onClick={handleSave}>
+            保存配置
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

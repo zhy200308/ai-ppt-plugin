@@ -388,7 +388,7 @@ export class OfficeJsAdapter implements ISlideAdapter {
             }
 
             const pres = await this.getPresentation();
-            const expanded = expandPluginOperation(op, {
+            const expanded = await expandPluginOperation(op, {
               slideWidth: pres.slideWidth,
               slideHeight: pres.slideHeight,
               theme: resolveTheme(),

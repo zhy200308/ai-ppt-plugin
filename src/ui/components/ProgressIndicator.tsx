@@ -2,7 +2,8 @@
 //  ProgressIndicator — 聊天处理阶段可视化指示器
 // ============================================================
 
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import type { ChatStage, ChatProgress } from '../../store';
 import {
   FileSearch,

@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ClarificationItem } from '../../store';
 import { Trash2, PlusCircle, PlayCircle, XCircle, ChevronLeft, ChevronRight, LayoutList } from 'lucide-react';
 import type { ThemeDefinition } from '../../themes';

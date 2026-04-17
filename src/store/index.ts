@@ -103,6 +103,12 @@ export interface ClarificationSource {
   contextSnapshot?: ContextSnapshotMeta;
 }
 
+export interface CanvaConfig {
+  accessToken: string;
+  enabled: boolean;
+  templates: Record<string, string>; // e.g. cover -> DAxxxx
+}
+
 interface AppState {
   // ---- UI 状态 ----
   activeTab: ViewTab;
@@ -201,6 +207,10 @@ interface AppState {
   addClarification: (item?: Partial<ClarificationItem>) => void;
   removeClarification: (id: string) => void;
   clearClarifications: () => void;
+
+  // ---- Canva 配置 ----
+  canvaConfig: CanvaConfig;
+  setCanvaConfig: (config: Partial<CanvaConfig>) => void;
 }
 
 // ---- 默认 Provider 配置 ----
@@ -285,6 +295,14 @@ export const useStore = create<AppState>()(
         set((s) => ({
           providerHealth: { ...s.providerHealth, [key]: health },
         })),
+
+      // Canva Config
+      canvaConfig: {
+        accessToken: '',
+        enabled: false,
+        templates: {},
+      },
+      setCanvaConfig: (patch) => set((s) => ({ canvaConfig: { ...s.canvaConfig, ...patch } })),
 
       // Proxy
       proxyConfig: { enabled: false, mode: 'system' },

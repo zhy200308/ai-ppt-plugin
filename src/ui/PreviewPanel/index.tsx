@@ -5,7 +5,8 @@
 //  - 双击编辑文本（updateText）
 // ============================================================
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../../store';
 import { adapterRef } from '../App';
 import type { ShapeInfo, SlideOperation } from '../../adapters/interface';

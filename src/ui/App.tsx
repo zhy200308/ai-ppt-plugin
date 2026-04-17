@@ -2,7 +2,8 @@
 //  App — 主应用入口组件
 // ============================================================
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import * as React from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useStore } from '../store';
 import { ChatPanel } from './ChatPanel';
 import { OutlinePanel } from './OutlinePanel';
