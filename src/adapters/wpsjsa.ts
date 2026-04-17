@@ -314,8 +314,18 @@ export class WpsJsaAdapter implements ISlideAdapter {
     const results: OperationResult[] = [];
     for (const op of operations) {
       try {
-        switch (op.action) {
-          case 'callPlugin': {
+          switch (op.action) {
+            case 'insertTemplate':
+              // WPS JSA: wps.Presentations.Item(1).InsertFromFile(...)
+              // Not fully supported via base64 in older WPS without saving to temp file,
+              // but we will try a mock or fallback to Office API if it supports it.
+              try {
+                await (window as any).wps.Application.ActivePresentation.InsertFromFile((op as any).base64);
+              } catch (e) {
+                console.warn('WPS insertSlidesFromBase64 not natively supported or failed', e);
+              }
+              break;
+            case 'callPlugin': {
             if (op.pluginId === 'bg-image') {
               const prompt = String(op.args?.prompt ?? '').trim();
               if (!prompt) throw new Error('bg-image 缺少 prompt');

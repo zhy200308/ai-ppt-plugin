@@ -17,6 +17,7 @@ import {
   parseStyleOptions,
   parseClarifications,
   shouldUseEnterprisePageMode,
+  type EnterpriseDeckPlan,
 } from '../../ai';
 import { adapterRef } from '../App';
 import type { ChatMessage } from '../../ai/types';
@@ -383,7 +384,7 @@ export function ChatPanel() {
       }
       : undefined;
 
-    const { plan } = await aiService.generateDeckPlan(
+    const deckPlanRes = await aiService.generateDeckPlan(
       userText,
       history,
       initialContext,
@@ -391,6 +392,31 @@ export function ChatPanel() {
       sessionContext,
       styleForAI,
     );
+
+    if ('needsTemplate' in deckPlanRes && deckPlanRes.needsTemplate) {
+      // Pause and ask user for template
+      setClarifications([
+        {
+          id: 'template-choice',
+          question: '请选择一个 PPT 模板（支持自动应用占位符排版）',
+          kind: 'template-select',
+          templateOptions: deckPlanRes.options,
+          required: true,
+          answer: '',
+        }
+      ], {
+        userText,
+        userMessageId: crypto.randomUUID(), // mock id
+        capturedAt: Date.now()
+      });
+      updateMessage(assistantId, {
+        content: '需要你选择一个模板后才能继续生成（请在上方选择）。',
+      });
+      setChatProgress({ stage: 'ready', detail: '等待回答问题' });
+      return;
+    }
+
+    const plan = (deckPlanRes as any).plan as EnterpriseDeckPlan;
 
     // 将页级计划提炼出的主题同步到适配器（WebPptxAdapter 会使用它做默认样式/插件布局）
     try {
@@ -427,6 +453,30 @@ export function ChatPanel() {
 
     const failedOps: SlideOperation[] = [];
     const executionHistory = [...history];
+    
+    // 如果用户选择了模板，首先插入模板幻灯片
+    if ((styleForAI as any)?.templateId) {
+        try {
+          const { BUILTIN_TEMPLATES, fetchTemplateBase64 } = await import('../../templates');
+          const tpl = BUILTIN_TEMPLATES.find(t => t.id === (styleForAI as any).templateId);
+        if (tpl) {
+          setChatProgress({ stage: 'applying', detail: `应用模板：${tpl.name}...` });
+          const base64 = await fetchTemplateBase64(tpl);
+          await applyOperationBatch([
+            { action: 'insertTemplate', base64 }
+          ], {
+            userMessage: `应用模板 ${tpl.name}`,
+            progressDetail: '正在将模板幻灯片插入当前文档'
+          });
+          // 重新读取文档结构，让 AI 能看到刚刚插入的模板占位符
+          if (adapterRef.current) {
+            initialContext.presentation = await adapterRef.current.getPresentation();
+          }
+        }
+      } catch (err: any) {
+        console.warn('模板插入失败，退回普通生成', err);
+      }
+    }
 
     for (let idx = 0; idx < pages.length; idx++) {
       const page = pages[idx];
@@ -451,7 +501,7 @@ export function ChatPanel() {
         currentContext,
         docContext,
         currentSessionContext,
-        styleForAI,
+        styleForAI as any,
       );
 
       if (pageResult.operations.length === 0) {
@@ -697,6 +747,11 @@ export function ChatPanel() {
       }
 
       if (wantEnterprise) {
+        // Automatically inject template logic into styleProfile if not already handled
+        if (!styleProfile.locked) {
+           // We'll let `generateDeckPlan` handle asking for the template
+        }
+
         await runEnterprisePageGeneration(
           aiService,
           text,
@@ -924,6 +979,7 @@ export function ChatPanel() {
         languageTone: picked.languageTone,
         tableStyle: picked.tableStyle,
         layoutPreset: picked.layoutPreset,
+        templateId: styleProfile.templateId, // Keep templateId if selected
       } as any,
     );
   }, [
@@ -1027,6 +1083,13 @@ export function ChatPanel() {
         setStyleProfile({ locked: true, themeSpec });
         try { (adapterRef.current as any)?.setTheme?.(themeSpec); } catch { /* ignore */ }
       }
+    }
+
+    const templateAnswer = clarifications.find((c) => c.kind === 'template-select')?.answer?.trim();
+    if (templateAnswer) {
+      // Keep other profile fields if exist, but apply the template
+      const storeProfile = useStore.getState().styleProfile || {};
+      setStyleProfile({ ...storeProfile, templateId: templateAnswer });
     }
 
     const confirmed = clarifications

@@ -375,6 +375,14 @@ export class OfficeJsAdapter implements ISlideAdapter {
     for (const op of operations) {
       try {
         switch (op.action) {
+          case 'insertTemplate':
+            await PowerPoint.run(async (ctx: any) => {
+              ctx.presentation.insertSlidesFromBase64((op as any).base64, {
+                formatting: "KeepSourceFormatting"
+              });
+              await ctx.sync();
+            });
+            break;
           case 'callPlugin': {
             // 插件端支持 bg-image：若配置了可用的图片生成 provider，则直接生成并设为背景
             if (op.pluginId === 'bg-image') {

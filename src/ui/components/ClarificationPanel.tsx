@@ -133,6 +133,7 @@ export function ClarificationPanel({
                     <option value="text">文本</option>
                     <option value="select">单选</option>
                     <option value="boolean">是/否</option>
+                    <option value="template-select">模板选择</option>
                   </select>
                   <label className="clarify-required">
                     <input
@@ -192,12 +193,33 @@ export function ClarificationPanel({
                         ))}
                       </datalist>
                     )}
+                    {item.kind === 'template-select' && (item.templateOptions?.length ?? 0) > 0 && (
+                      <div className="template-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '8px', marginBottom: '8px' }}>
+                        {item.templateOptions!.map((tpl) => {
+                          const active = item.answer === tpl.id;
+                          return (
+                            <button
+                              type="button"
+                              key={tpl.id}
+                              className={`template-card ${active ? 'active' : ''}`}
+                              onClick={() => onChange(item.id, { answer: tpl.id })}
+                              disabled={disabled}
+                              style={{ border: active ? '2px solid #2563eb' : '1px solid #e5e7eb', borderRadius: '6px', overflow: 'hidden', padding: 0, background: '#fff', cursor: 'pointer' }}
+                            >
+                              <img src={tpl.thumbnailUrl} alt={tpl.name} style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'cover', aspectRatio: '16/9' }} />
+                              <div style={{ padding: '6px', fontSize: '12px', textAlign: 'center', color: active ? '#1e3a8a' : '#4b5563', fontWeight: active ? 600 : 400 }}>{tpl.name}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    
                     <input
                       className="clarify-answer"
                       value={item.answer}
-                      disabled={disabled}
+                      disabled={disabled || item.kind === 'template-select'}
                       list={item.kind === 'select' ? datalistId : undefined}
-                      placeholder={item.kind === 'select' ? '可从候选中选，也可自定义输入' : '请输入答案'}
+                      placeholder={item.kind === 'select' ? '可从候选中选，也可自定义输入' : item.kind === 'template-select' ? '请点击上方选择模板' : '请输入答案'}
                       onChange={(e) => onChange(item.id, { answer: e.target.value })}
                     />
                   </>

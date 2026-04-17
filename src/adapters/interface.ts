@@ -127,7 +127,8 @@ export type SlideOperation =
   | { action: 'deleteSlide';  slideIndex: number }
   | { action: 'reorderSlide'; fromIndex: number; toIndex: number }
   | { action: 'setNotes';     slideIndex: number; notes: string }
-  | { action: 'setBackground'; slideIndex: number; color?: string; imageBase64?: string };
+  | { action: 'setBackground'; slideIndex: number; color?: string; imageBase64?: string }
+  | { action: 'insertTemplate'; base64: string }; // New action for template injection
 
 /** 操作执行结果 */
 export interface OperationResult {

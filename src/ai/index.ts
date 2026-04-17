@@ -1086,8 +1086,25 @@ export class AIService {
       languageTone?: LanguageTone;
       tableStyle?: TableStyle;
       layoutPreset?: LayoutPreset;
+      templateId?: string; // Selected PPTX template ID
     },
-  ): Promise<{ plan: EnterpriseDeckPlan; response: AIResponse; contextTokens: number }> {
+  ): Promise<{ plan: EnterpriseDeckPlan; response: AIResponse; contextTokens: number } | { needsTemplate: true; options: any[] }> {
+    
+    // Check if we need to ask for a template first
+    if (!styleProfile?.templateId && userMessage.match(/(生成|做)一[份个].*ppt/i)) {
+      try {
+        const { BUILTIN_TEMPLATES } = await import('../templates');
+        if (BUILTIN_TEMPLATES && BUILTIN_TEMPLATES.length > 0) {
+          return {
+            needsTemplate: true,
+            options: BUILTIN_TEMPLATES
+          };
+        }
+      } catch (e) {
+        // ignore if templates module fails
+      }
+    }
+
     const plannerSystem = [
       '【Researcher & Copywriter Agent 模式】',
       '任务：作为研究员和资深文案，先为整套 PPT 生成一份极其严密的页级逻辑蓝图 (Markdown大纲转结构化JSON)。',
@@ -1158,7 +1175,7 @@ export class AIService {
   ): Promise<{ text: string; operations: SlideOperation[]; response: AIResponse; contextTokens: number }> {
     const pageSystem = [
       '【Art Director Agent 模式】',
-      '任务：作为顶级美术指导，你现在的目标是将 Copywriter 提供的页面内容(contentSummary)映射到最合适的弹性排版(Layout)中。',
+      '任务：作为顶级美术指导，你现在的目标是将 Copywriter 提供的页面内容(contentSummary)映射到最合适的排版中。',
       '你必须只输出一个 ```json:operations 代码块。',
       `当前目标页: 第 ${page.pageNumber} 页 / 共 ${plan.totalPages} 页`,
       `目标页标题: ${page.title}`,
@@ -1167,11 +1184,13 @@ export class AIService {
       '主题规范：',
       JSON.stringify(plan.theme, null, 2),
       '核心规则：',
-      '1. 优先使用 callPlugin 调用内置排版(如 two-column, image-text, grid-4, big-number)，将内容填入对应的参数中；',
-      '2. 若内容包含需要配图或具象化表达的场景，必须在 callPlugin 中设置 imageKeyword="英文关键词"(如果需要图标，设置 imageKeyword="icon:lucide-zap" 等)；',
-      '3. 【重要】如果需要生成高水准的背景图(如使用 bg-image 插件)，prompt 参数必须是专为 Flux/SDXL 优化的高质量生图提示词（全英文），例如："abstract cyberpunk technology background, dark blue gradient, glowing neon lines, isometric 3D, empty space for text, 8k resolution, masterpiece --ar 16:9"；',
-      '4. 如果检测到有可用的 Canva 模板（参考下文的 Canva 模板列表），你也可以使用 canva-render 插件，将提取的内容填入 textVariables 字典中，获得降维打击的极高排版质量。',
-      '5. 如果内置版式无法满足，使用 auto-layout 插件，自己编写 SlideLayoutNode 弹性布局结构；',
+      '【重要：基于模板的替换填充】',
+      '1. 我们已经在当前 PPT 中插入了预设的模板页面（可能带有“单击此处添加标题”、“添加正文”等占位文本）。',
+      '2. 请**优先使用 updateText 和 replaceImage**，寻找当前上下文中具有对应 shapeId 的占位符文本框，将 `text` 替换为你生成的内容。',
+      '3. 不要随意创建新页面或新文本框，除非当前页面真的缺少合适的占位符。',
+      '【如果没有模板占位符，才使用备用弹性排版】：',
+      '4. 优先使用 callPlugin 调用内置排版(如 two-column, image-text, grid-4, big-number)，将内容填入对应的参数中；',
+      '5. 若内容包含需要配图或具象化表达的场景，必须在 callPlugin 中设置 imageKeyword="英文关键词"；',
       '6. 必须输出合法 JSON 数组，不要解释。',
     ].join('\n');
 

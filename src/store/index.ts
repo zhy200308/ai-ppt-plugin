@@ -83,15 +83,25 @@ export interface StyleProfile {
   languageTone?: 'default' | 'academic' | 'business' | 'teaching';
   tableStyle?: 'default' | 'academic' | 'finance' | 'teaching';
   layoutPreset?: 'standard' | 'defense' | 'report' | 'teaching';
+  templateId?: string;
 }
 
-export type ClarificationKind = 'text' | 'select' | 'boolean';
+export type ClarificationKind = 'text' | 'select' | 'boolean' | 'template-select';
+
+export interface TemplateOption {
+  id: string;
+  name: string;
+  thumbnailUrl: string;
+  base64?: string;
+  url?: string;
+}
 
 export interface ClarificationItem {
   id: string;
   question: string;
   kind: ClarificationKind;
   options?: string[];
+  templateOptions?: TemplateOption[];
   required?: boolean;
   answer: string;
 }

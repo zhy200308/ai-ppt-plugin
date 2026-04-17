@@ -414,6 +414,9 @@ export class WebPptxAdapter implements ISlideAdapter {
         }
 
         switch (op.action) {
+          case 'insertTemplate':
+            console.warn('Web mode does not support inserting templates from base64 directly yet');
+            break;
           case 'updateText':
             await this.updateShapeText({
               slideIndex: op.slideIndex,
